@@ -1,0 +1,105 @@
+diff -uNrp kernel-2.6.35.fc14.orig/drivers/hid/hid-aureal.c kernel-2.6.35.fc14.new/drivers/hid/hid-aureal.c
+--- kernel-2.6.35.fc14.orig/drivers/hid/hid-aureal.c	1970-01-01 03:00:00.000000000 +0300
++++ kernel-2.6.35.fc14.new/drivers/hid/hid-aureal.c	2011-02-06 00:02:50.706753371 +0200
+@@ -0,0 +1,62 @@
++/*
++ *  HID driver for Aureal Cy se W-01RN USB_V3.1 devices
++ *
++ *  Copyright (c) 2010 Franco Catrin <fcatrin@gmail.com>
++ *  Copyright (c) 2010 Ben Cropley <bcropley@internode.on.net>
++ *
++ *  Based on HID sunplus driver by
++ *  Copyright (c) 1999 Andreas Gal
++ *  Copyright (c) 2000-2005 Vojtech Pavlik <vojtech@suse.cz>
++ *  Copyright (c) 2005 Michael Haboustak <mike-@cinci.rr.com> for Concept2, Inc
++ *  Copyright (c) 2006-2007 Jiri Kosina
++ *  Copyright (c) 2007 Paul Walmsley
++ *  Copyright (c) 2008 Jiri Slaby
++ */
++
++/*
++ * This program is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License as published by the Free
++ * Software Foundation; either version 2 of the License, or (at your option)
++ * any later version.
++ */
++
++#include <linux/device.h>
++#include <linux/hid.h>
++#include <linux/module.h>
++
++#include "hid-ids.h"
++
++static void aureal_report_fixup(struct hid_device *hdev, __u8 *rdesc, unsigned int rsize)
++{
++	if (rsize >= 54 && rdesc[52] == 0x25 && rdesc[53] == 0x01) {
++		dev_info(&hdev->dev, "fixing Aureal Cy se W-01RN USB_V3.1 "
++				"report descriptor. Keyboard Logical Maximum = 101\n");
++		rdesc[53] = 0x65;
++	}
++}
++
++static const struct hid_device_id aureal_devices[] = {
++	{ HID_USB_DEVICE(USB_VENDOR_ID_AUREAL, USB_DEVICE_ID_AUREAL_W01RN) },
++	{ }
++};
++MODULE_DEVICE_TABLE(hid, aureal_devices);
++
++static struct hid_driver aureal_driver = {
++	.name = "aureal",
++	.id_table = aureal_devices,
++	.report_fixup = aureal_report_fixup,
++};
++
++static int __init aureal_init(void)
++{
++	return hid_register_driver(&aureal_driver);
++}
++
++static void __exit aureal_exit(void)
++{
++	hid_unregister_driver(&aureal_driver);
++}
++
++module_init(aureal_init);
++module_exit(aureal_exit);
++MODULE_LICENSE("GPL");
+diff -uNrp kernel-2.6.35.fc14.orig/drivers/hid/hid-ids.h kernel-2.6.35.fc14.new/drivers/hid/hid-ids.h
+--- kernel-2.6.35.fc14.orig/drivers/hid/hid-ids.h	2011-02-05 23:47:42.221327138 +0200
++++ kernel-2.6.35.fc14.new/drivers/hid/hid-ids.h	2011-02-06 00:01:36.968377016 +0200
+@@ -535,5 +535,7 @@
+ #define USB_DEVICE_ID_KYE_ERGO_525V	0x0087
+ #define USB_DEVICE_ID_KYE_GPEN_560	0x5003
+ 
++#define USB_VENDOR_ID_AUREAL            0x0755
++#define USB_DEVICE_ID_AUREAL_W01RN      0x2626
+ 
+ #endif
+diff -uNrp kernel-2.6.35.fc14.orig/drivers/hid/Kconfig kernel-2.6.35.fc14.new/drivers/hid/Kconfig
+--- kernel-2.6.35.fc14.orig/drivers/hid/Kconfig	2011-02-05 23:47:42.219327028 +0200
++++ kernel-2.6.35.fc14.new/drivers/hid/Kconfig	2011-02-06 00:00:05.729113933 +0200
+@@ -472,6 +472,13 @@ config HID_ZYDACRON
+ 	---help---
+ 	Support for Zydacron remote control.
+ 
++config HID_AUREAL
++	tristate "Aureal" if EMBEDDED
++	depends on USB_HID
++	default !EMBEDDED
++	---help---
++	Support for Aureal Cy se W-01RN USB_V3.1
++
+ endmenu
+ 
+ endif # HID_SUPPORT
+diff -uNrp kernel-2.6.35.fc14.orig/drivers/hid/Makefile kernel-2.6.35.fc14.new/drivers/hid/Makefile
+--- kernel-2.6.35.fc14.orig/drivers/hid/Makefile	2011-02-05 23:47:42.217326920 +0200
++++ kernel-2.6.35.fc14.new/drivers/hid/Makefile	2011-02-06 00:05:22.135358886 +0200
+@@ -62,6 +62,7 @@ obj-$(CONFIG_HID_TWINHAN)	+= hid-twinhan
+ obj-$(CONFIG_HID_ZEROPLUS)	+= hid-zpff.o
+ obj-$(CONFIG_HID_ZYDACRON)	+= hid-zydacron.o
+ obj-$(CONFIG_HID_WACOM)		+= hid-wacom.o
++obj-$(CONFIG_HID_AUREAL)	+= hid-aureal.o
+ 
+ obj-$(CONFIG_USB_HID)		+= usbhid/
+ obj-$(CONFIG_USB_MOUSE)		+= usbhid/
